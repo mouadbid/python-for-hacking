@@ -105,4 +105,79 @@ if __name__ == "__main__":
             print(f"IP: {host['ip']:<15} | Status: {host['status']:<10} | Hostname: {host['hostname']}")
     else:
         print("No hosts found.")
+        sys.exit(1)
     print("-" * 40)
+
+    while True:
+        victim = input("Enter the victim IP from the target network: ")
+        try:
+            # Check if victim IP is valid and in the target network
+            if ipaddress.ip_address(victim) in ipaddress.ip_network(target, strict=False):
+                print(f"Victim IP {victim} is valid and in the network.")
+                break
+            else:
+                print("Error: Victim IP is not in the target network.")
+        except ValueError:
+            print("Error: Invalid IP address format.")
+            
+    print("-" * 40)
+    print('Choose the type of scanning:')
+    print('[T: TCP Connect Scan]')
+    print('[U: UDP Scan]')
+    print('[S: SYN Stealth Scan]')
+    print('[O: OS Detection]')
+    print('[V: Version Detection]')
+    print('[A: Aggressive Scan]')
+    
+    scanning_type = input("Enter your choice (T/U/S/O/V/A): ").upper()
+
+    scanner = nm.PortScanner()
+    print(f"Starting scan on {victim}...")
+
+    try:
+        if scanning_type == "T":
+            # TCP Connect Scan
+            scanner.scan(victim, arguments='-sT')
+        elif scanning_type == "U":
+            # UDP Scan
+            scanner.scan(victim, arguments='-sU')
+        elif scanning_type == "S":
+            # SYN Scan (requires root/admin privileges)
+            scanner.scan(victim, arguments='-sS')
+        elif scanning_type == "O":
+            # OS Detection (requires root/admin privileges)
+            scanner.scan(victim, arguments='-O')
+        elif scanning_type == "V":
+            # Version Detection
+            scanner.scan(victim, arguments='-sV')
+        elif scanning_type == "A":
+            # Aggressive Scan
+            scanner.scan(victim, arguments='-A')
+        else:
+            print("Invalid scanning type selected.")
+            sys.exit(1)
+            
+        # Display results
+        if victim in scanner.all_hosts():
+            print("-" * 40)
+            print(f"Scan Report for {victim}")
+            print(f"State: {scanner[victim].state()}")
+            
+            for proto in scanner[victim].all_protocols():
+                print(f"\nProtocol: {proto}")
+                ports = scanner[victim][proto].keys()
+                for port in sorted(ports):
+                    state = scanner[victim][proto][port]['state']
+                    service = scanner[victim][proto][port]['name']
+                    print(f"Port: {port:<5} | State: {state:<10} | Service: {service}")
+            
+            if 'osmatch' in scanner[victim]:
+                 for osmatch in scanner[victim]['osmatch']:
+                     print(f"OS Match: {osmatch['name']} ({osmatch['accuracy']}%)")
+        else:
+             print(f"No scan results returned for {victim}. Host might be down or filtering probes.")
+
+    except nm.PortScannerError as e:
+        print(f"Nmap error: {e}")
+    except Exception as e:
+        print(f"Unexpected error: {e}")
