@@ -1,9 +1,8 @@
 import nmap as nm 
 import sys
-import platform
-import subprocess
 import psutil
 import socket
+import ipaddress
 
 def discover_hosts(target):
     # Initialize the scanner
@@ -68,6 +67,13 @@ def get_active_networks():
 
     return active_interfaces
 
+def validate_target(target):
+    try:
+        ipaddress.ip_network(target, strict=False)
+        return True
+    except ValueError:
+        return False
+
 
 
 if __name__ == "__main__":
@@ -81,6 +87,12 @@ if __name__ == "__main__":
     else:
         print("No active network interfaces found.")
     target = input("Enter the target network (e.g., 192.168.1.0/24): ")
+
+    if(validate_target(target)):
+        print("Valid target")
+    else:
+        print("Invalid target")
+        sys.exit(1)
     
     # Run the discovery
     found_hosts = discover_hosts(target)
