@@ -1,5 +1,9 @@
 import nmap as nm 
 import sys
+import platform
+import subprocess
+import psutil
+import socket
 
 def discover_hosts(target):
     # Initialize the scanner
@@ -42,8 +46,41 @@ def discover_hosts(target):
     
     return hosts_list
 
+def get_active_networks():
+    """
+    Returns a dictionary of active network interfaces and their IPv4 addresses.
+    Excludes loopback (127.0.0.1) and disconnected interfaces.
+    """
+    active_interfaces = {}
+    
+    # Get all network interface stats (isup, speed, etc.)
+    stats = psutil.net_if_stats()
+    # Get all network interface addresses
+    addrs = psutil.net_if_addrs()
+
+    for interface_name, interface_addresses in addrs.items():
+        # 1. Check if interface exists in stats and is "UP" (active)
+        if interface_name in stats and stats[interface_name].isup:
+            for address in interface_addresses:
+                # 2. Filter for IPv4 only (AF_INET) and exclude Loopback (127.0.0.1)
+                if address.family == socket.AF_INET and address.address != "127.0.0.1":
+                    active_interfaces[interface_name] = address.address
+
+    return active_interfaces
+
+
+
 if __name__ == "__main__":
-    target = "192.168.1.0/24"
+    networks = get_active_networks()
+
+    if networks:
+        print(f"{'Interface':<20} {'IP Address':<20}")
+        print("-" * 40)
+        for name, ip in networks.items():
+            print(f"{name:<20} {ip:<20}")
+    else:
+        print("No active network interfaces found.")
+    target = input("Enter the target network (e.g., 192.168.1.0/24): ")
     
     # Run the discovery
     found_hosts = discover_hosts(target)
