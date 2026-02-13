@@ -41,7 +41,12 @@ def format_results(scanner, target):
     output.append(f"State: {scanner[target].state()}")
     
     # Process Protocols
-    for proto in scanner[target].all_protocols():
+    protocols = scanner[target].all_protocols()
+    if not protocols:
+        output.append("\nNo open ports found in the scanned range.")
+        return "\n".join(output)
+
+    for proto in protocols:
         output.append(f"\nProtocol: {proto.upper()}")
         ports = scanner[target][proto].keys()
         for port in sorted(ports):
