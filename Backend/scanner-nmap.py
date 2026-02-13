@@ -88,11 +88,9 @@ if __name__ == "__main__":
         print("No active network interfaces found.")
     target = input("Enter the target network (e.g., 192.168.1.0/24): ")
 
-    if(validate_target(target)):
-        print("Valid target")
-    else:
+    while(not validate_target(target)):
         print("Invalid target")
-        sys.exit(1)
+        target = input("Enter the target network (e.g., 192.168.1.0/24): ")
     
     # Run the discovery
     found_hosts = discover_hosts(target)
