@@ -138,22 +138,22 @@ if __name__ == "__main__":
     try:
         if scanning_type == "T":
             # TCP Connect Scan
-            scanner.scan(victim, arguments='-sT')
+            scanner.scan(victim, arguments='-sT -Pn')
         elif scanning_type == "U":
             # UDP Scan
-            scanner.scan(victim, arguments='-sU')
+            scanner.scan(victim, arguments='-sU -Pn')
         elif scanning_type == "S":
             # SYN Scan (requires root/admin privileges)
-            scanner.scan(victim, arguments='-sS')
+            scanner.scan(victim, arguments='-sS -Pn')
         elif scanning_type == "O":
             # OS Detection (requires root/admin privileges)
-            scanner.scan(victim, arguments='-O')
+            scanner.scan(victim, arguments='-O -Pn')
         elif scanning_type == "V":
             # Version Detection
-            scanner.scan(victim, arguments='-sV')
+            scanner.scan(victim, arguments='-sV -Pn')
         elif scanning_type == "A":
             # Aggressive Scan
-            scanner.scan(victim, arguments='-A')
+            scanner.scan(victim, arguments='-A -Pn')
         else:
             print("Invalid scanning type selected.")
             sys.exit(1)
