@@ -3,6 +3,7 @@ import sys
 import psutil
 import socket
 import ipaddress
+import scan_modules
 
 def discover_hosts(target):
     # Initialize the scanner
@@ -137,46 +138,23 @@ if __name__ == "__main__":
 
     try:
         if scanning_type == "T":
-            # TCP Connect Scan
-            scanner.scan(victim, arguments='-sT -Pn')
+            scan_modules.scan_tcp(victim, scanner)
         elif scanning_type == "U":
-            # UDP Scan
-            scanner.scan(victim, arguments='-sU -Pn')
+            scan_modules.scan_udp(victim, scanner)
         elif scanning_type == "S":
-            # SYN Scan (requires root/admin privileges)
-            scanner.scan(victim, arguments='-sS -Pn')
+            scan_modules.scan_syn(victim, scanner)
         elif scanning_type == "O":
-            # OS Detection (requires root/admin privileges)
-            scanner.scan(victim, arguments='-O -Pn')
+            scan_modules.scan_os(victim, scanner)
         elif scanning_type == "V":
-            # Version Detection
-            scanner.scan(victim, arguments='-sV -Pn')
+             scan_modules.scan_version(victim, scanner)
         elif scanning_type == "A":
-            # Aggressive Scan
-            scanner.scan(victim, arguments='-A -Pn')
+            scan_modules.scan_aggressive(victim, scanner)
         else:
             print("Invalid scanning type selected.")
             sys.exit(1)
             
-        # Display results
-        if victim in scanner.all_hosts():
-            print("-" * 40)
-            print(f"Scan Report for {victim}")
-            print(f"State: {scanner[victim].state()}")
-            
-            for proto in scanner[victim].all_protocols():
-                print(f"\nProtocol: {proto}")
-                ports = scanner[victim][proto].keys()
-                for port in sorted(ports):
-                    state = scanner[victim][proto][port]['state']
-                    service = scanner[victim][proto][port]['name']
-                    print(f"Port: {port:<5} | State: {state:<10} | Service: {service}")
-            
-            if 'osmatch' in scanner[victim]:
-                 for osmatch in scanner[victim]['osmatch']:
-                     print(f"OS Match: {osmatch['name']} ({osmatch['accuracy']}%)")
-        else:
-             print(f"No scan results returned for {victim}. Host might be down or filtering probes.")
+        # Display results using the new formatter
+        print(scan_modules.format_results(scanner, victim))
 
     except nm.PortScannerError as e:
         print(f"Nmap error: {e}")
