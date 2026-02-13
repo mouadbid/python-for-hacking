@@ -104,8 +104,9 @@ if __name__ == "__main__":
         for host in found_hosts:
             print(f"IP: {host['ip']:<15} | Status: {host['status']:<10} | Hostname: {host['hostname']}")
     else:
-        print("No hosts found.")
-        sys.exit(1)
+        print("No hosts found responding to ping scan.")
+        # We continue to allow manual entry in case host is up but blocking ping
+    print("-" * 40)
     print("-" * 40)
 
     while True:
