@@ -1,0 +1,52 @@
+<div id="scanner-view" class="view-section active">
+    <!-- Step 1: Network Selection -->
+    <section id="network-section" class="card">
+        <h2>1. Active Networks</h2>
+        <div id="network-list" class="grid-list">
+            <!-- Populated by JS -->
+            <div class="loading">Loading interfaces...</div>
+        </div>
+    </section>
+
+    <!-- Step 2: Target Selection -->
+    <section id="discovery-section" class="card">
+        <h2>2. Target Discovery</h2>
+        <div class="input-group">
+            <input type="text" id="target-input" placeholder="e.g. 192.168.1.0/24">
+            <button id="discover-btn" class="btn primary">Discover Hosts</button>
+        </div>
+        <div id="host-list" class="hidden">
+            <h3>Discovered Hosts</h3>
+            <div id="hosts-container" class="grid-list">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Step 3: Scan Execution -->
+    <section id="scan-section" class="card disabled">
+        <h2>3. Execute Scan</h2>
+        <div class="scan-controls">
+            <div class="selected-target">
+                Target: <span id="selected-host-ip">None</span>
+            </div>
+            <div class="scan-options">
+                <select id="scan-type">
+                    <option value="T">TCP Connect Scan (-sT)</option>
+                    <option value="S">SYN Stealth Scan (-sS)</option>
+                    <option value="U">UDP Scan (-sU)</option>
+                    <option value="O">OS Detection (-O)</option>
+                    <option value="V">Version Detection (-sV)</option>
+                    <option value="A">Aggressive Scan (-A)</option>
+                </select>
+                <button id="scan-btn" class="btn danger">Run Scan</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results -->
+    <section id="results-section" class="card hidden">
+        <h2>Scan Results</h2>
+        <pre id="scan-output">Waiting for results...</pre>
+    </section>
+</div>

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Scanner Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-layout">
+        {% include 'components/sidebar.html' %}
+
+        <div class="main-content">
+            <div class="container">
+                <header>
+                    <h1>Network Scanner <span class="highlight">Pro</span></h1>
+                    <div class="header-right">
+                        <div id="os-info">Loading OS...</div>
+                        <div id="status-indicator">Ready</div>
+                    </div>
+                </header>
+
+                <main>
+                    {% include 'tabs/scanner.html' %}
+                    {% include 'tabs/bruteforce.html' %}
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

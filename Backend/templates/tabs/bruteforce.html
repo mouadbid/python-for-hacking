@@ -1,0 +1,63 @@
+<!-- Brute Force View -->
+<div id="bruteforce-view" class="view-section hidden">
+    <section class="card">
+        <h2>Brute Force Attack</h2>
+        <div class="input-group">
+            <label for="bf-target">Target IP:</label>
+            <select id="bf-target">
+                <option value="">Select a target...</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 1;">
+                    <label for="bf-protocol">Protocol:</label>
+                    <select id="bf-protocol">
+                        <option value="ssh">SSH</option>
+                        <option value="telnet">Telnet</option>
+                    </select>
+                </div>
+                <div style="width: 100px;">
+                    <label for="bf-port">Port:</label>
+                    <input type="number" id="bf-port" placeholder="22" value="22">
+                </div>
+            </div>
+            <div style="margin-top: 0.5rem;">
+                <button id="bf-scan-btn" class="btn primary" style="width: 100%; padding: 0.5rem; font-size: 0.9rem;">
+                    Scan Target for Open Ports
+                </button>
+            </div>
+        </div>
+        <div id="bf-open-ports" class="input-group hidden"
+            style="background: rgba(0,255,65,0.05); padding: 1rem; border-radius: 6px; border: 1px solid rgba(0,255,65,0.2);">
+            <label style="color: #00ff41; margin-bottom: 0.5rem; display: block;">Open Ports Detected:</label>
+            <div id="bf-port-list" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+        </div>
+        <div class="input-group">
+            <label for="bf-username">Username:</label>
+            <input type="text" id="bf-username" placeholder="root">
+        </div>
+        <div class="input-group">
+            <label for="bf-pass-mode">Password Mode:</label>
+            <select id="bf-pass-mode">
+                <option value="manual">Manual List</option>
+                <option value="file">Upload File</option>
+            </select>
+        </div>
+        <div class="input-group" id="manual-pass-group">
+            <label for="bf-passwords">Passwords (one per line):</label>
+            <textarea id="bf-passwords" rows="5" placeholder="password123&#10;admin&#10;123456"></textarea>
+        </div>
+        <div class="input-group hidden" id="file-pass-group">
+            <label for="bf-pass-file">Upload Password List (.txt):</label>
+            <input type="file" id="bf-pass-file" accept=".txt">
+            <div id="file-status"></div>
+        </div>
+        <button id="bf-attack-btn" class="btn danger">Start Attack</button>
+    </section>
+
+    <section id="bf-results-section" class="card hidden">
+        <h2>Attack Results</h2>
+        <pre id="bf-output">Waiting for attack...</pre>
+    </section>
+</div>
