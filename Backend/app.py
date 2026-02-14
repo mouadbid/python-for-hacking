@@ -86,16 +86,25 @@ def brute_force():
     if not all([target, service, username, passwords]):
         return jsonify({'error': 'Missing required fields'}), 400
         
-    if service.lower() == 'ssh':
-        if port == 0: port = 22
-        results = attack_modules.brute_force_ssh(target, username, passwords, port=port)
-    elif service.lower() == 'telnet':
-        if port == 0: port = 23
-        results = attack_modules.brute_force_telnet(target, username, passwords, port=port)
-    else:
-        return jsonify({'error': 'Unsupported service'}), 400
+    try:
+        if service.lower() == 'ssh':
+            if port == 0: port = 22
+            print(f"[DEBUG] Starting SSH attack on {target}:{port}")
+            results = attack_modules.brute_force_ssh(target, username, passwords, port=port)
+        elif service.lower() == 'telnet':
+            if port == 0: port = 23
+            print(f"[DEBUG] Starting Telnet attack on {target}:{port}")
+            results = attack_modules.brute_force_telnet(target, username, passwords, port=port)
+        else:
+            return jsonify({'error': 'Unsupported service'}), 400
+            
+        return jsonify(results)
         
-    return jsonify(results)
+    except Exception as e:
+        print(f"[ERROR] Brute force failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'error': f"Server Error: {str(e)}"}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5050)
