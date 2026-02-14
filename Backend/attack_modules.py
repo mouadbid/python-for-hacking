@@ -41,11 +41,11 @@ async def attempt_telnet_login(target, port, username, password):
         reader, writer = await asyncio.wait_for(telnetlib3.open_connection(target, port), timeout=5)
         
         # Read until login prompt
-        await asyncio.wait_for(reader.readuntil(b"login: "), timeout=3)
+        await asyncio.wait_for(reader.readuntil("login: "), timeout=3)
         writer.write(username + "\n")
         
         # Read until password prompt
-        await asyncio.wait_for(reader.readuntil(b"Password: "), timeout=3)
+        await asyncio.wait_for(reader.readuntil("Password: "), timeout=3)
         writer.write(password + "\n")
         
         # Read response to check for success
