@@ -2,3 +2,4 @@ Flask
 python-nmap
 paramiko
 psutil
+telnetlib3

