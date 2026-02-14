@@ -2,5 +2,3 @@ Flask
 python-nmap
 paramiko
 psutil
-telnetlib
-socket
