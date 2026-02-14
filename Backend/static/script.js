@@ -42,7 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
     fetch('/api/system-info')
         .then(res => res.json())
         .then(data => {
-            document.getElementById('os-info').textContent = `${data.os} ${data.release}`;
+            document.getElementById('os-info').innerHTML = `
+                <span>${data.os} ${data.release}</span>
+                <span style="margin-left: 1rem; color: #00ff41;">CPU: ${data.cpu}</span>
+                <span style="margin-left: 1rem; color: #00ff41;">RAM: ${data.ram}</span>
+            `;
         })
         .catch(err => {
             console.error('Failed to load OS info:', err);

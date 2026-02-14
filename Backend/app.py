@@ -5,6 +5,7 @@ import scan_modules
 import attack_modules
 import nmap
 import ipaddress
+import psutil
 
 app = Flask(__name__)
 
@@ -15,11 +16,15 @@ def index():
 
 @app.route('/api/system-info', methods=['GET'])
 def get_system_info():
+    cpu_percent = psutil.cpu_percent(interval=1)
+    memory = psutil.virtual_memory()
     return jsonify({
         'os': platform.system(),
         'release': platform.release(),
         'version': platform.version(),
-        'node': platform.node()
+        'node': platform.node(),
+        'cpu': f"{cpu_percent}%",
+        'ram': f"{memory.percent}%"
     })
 
 @app.route('/api/networks', methods=['GET'])
