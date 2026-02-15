@@ -1,0 +1,205 @@
+<!-- ARP Spoofing View -->
+<div id="arp-view" class="view-section hidden">
+    <div class="arp-layout">
+
+        <!-- MItM Visualizer -->
+        <section class="card visualizer-panel">
+            <h2>🕸️ Network Topology</h2>
+            <div class="network-map">
+                <div class="node-container">
+                    <div class="node-icon">📱</div>
+                    <div class="node-label">Victim</div>
+                    <div class="node-ip" id="vis-victim-ip">192.168.1.X</div>
+                </div>
+
+                <div class="connection-line" id="conn-victim-attacker">
+                    <div class="flow-arrow">➤</div>
+                    <div class="flow-arrow delay-1">➤</div>
+                </div>
+
+                <div class="node-container attacker-node">
+                    <div class="node-icon">💀</div>
+                    <div class="node-label">YOU (Attacker)</div>
+                    <div class="node-ip">192.168.1.Y</div>
+                </div>
+
+                <div class="connection-line" id="conn-attacker-gateway">
+                    <div class="flow-arrow">➤</div>
+                    <div class="flow-arrow delay-1">➤</div>
+                </div>
+
+                <div class="node-container">
+                    <div class="node-icon">🌐</div>
+                    <div class="node-label">Gateway</div>
+                    <div class="node-ip" id="vis-gateway-ip">192.168.1.1</div>
+                </div>
+            </div>
+
+            <div class="spoof-status" id="spoof-status-text">STATUS: IDLE - Normal Traffic Flow</div>
+        </section>
+
+        <!-- Controls -->
+        <section class="card control-panel">
+            <h2>☠️ ARP Poisoning Config</h2>
+
+            <div class="grid-inputs-arp">
+                <div class="input-group">
+                    <label>Target IP (Victim)</label>
+                    <input type="text" id="arp-target" placeholder="e.g., 192.168.1.50">
+                </div>
+                <div class="input-group">
+                    <label>Gateway IP (Router)</label>
+                    <input type="text" id="arp-gateway" placeholder="e.g., 192.168.1.1">
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button id="arp-btn" class="btn btn-danger" onclick="toggleArpSpoof()">⚠️ START POISONING</button>
+            </div>
+        </section>
+
+    </div>
+</div>
+
+<style>
+    /* ARP Specific Styles */
+    .arp-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .visualizer-panel {
+        text-align: center;
+        background: rgba(0, 10, 20, 0.6);
+    }
+
+    .network-map {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+        padding: 2rem 0;
+    }
+
+    .node-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        z-index: 2;
+    }
+
+    .node-icon {
+        font-size: 3rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: 2px solid var(--border);
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+        transition: all 0.3s;
+    }
+
+    .attacker-node .node-icon {
+        border-color: var(--danger);
+        box-shadow: 0 0 20px var(--danger-glow);
+    }
+
+    .node-label {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        font-weight: bold;
+    }
+
+    .node-ip {
+        color: var(--accent);
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+    }
+
+    .connection-line {
+        flex: 1;
+        height: 4px;
+        background: rgba(255, 255, 255, 0.1);
+        position: relative;
+        border-radius: 2px;
+        min-width: 100px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        overflow: hidden;
+    }
+
+    .flow-arrow {
+        color: var(--accent);
+        opacity: 0;
+        transition: all 0.3s;
+    }
+
+    /* Active State Styles */
+    .poison-active .connection-line {
+        background: rgba(255, 0, 85, 0.2);
+    }
+
+    .poison-active .flow-arrow {
+        animation: flow 1.5s infinite linear;
+        color: var(--danger);
+        opacity: 1;
+    }
+
+    .poison-active .attacker-node .node-icon {
+        animation: pulse-danger 1s infinite;
+    }
+
+    .delay-1 {
+        animation-delay: 0.75s !important;
+    }
+
+    @keyframes flow {
+        0% {
+            transform: translateX(-50px);
+            opacity: 0;
+        }
+
+        50% {
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateX(50px);
+            opacity: 0;
+        }
+    }
+
+    @keyframes pulse-danger {
+        0% {
+            box-shadow: 0 0 10px var(--danger-glow);
+        }
+
+        50% {
+            box-shadow: 0 0 30px var(--danger-glow);
+        }
+
+        100% {
+            box-shadow: 0 0 10px var(--danger-glow);
+        }
+    }
+
+    .spoof-status {
+        margin-top: 1rem;
+        font-family: var(--font-mono);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+
+    .grid-inputs-arp {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+</style>

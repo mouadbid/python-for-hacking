@@ -146,6 +146,27 @@ def attack_dos():
     
     return jsonify(result)
 
+@app.route('/api/attack/arp/start', methods=['POST'])
+def start_arp():
+    data = request.json
+    target = data.get('target')
+    gateway = data.get('gateway')
+    
+    if not target or not gateway:
+        return jsonify({'error': 'Target and Gateway IPs are required'}), 400
+        
+    result = attack_modules.start_arp_spoof(target, gateway)
+    return jsonify(result)
+
+@app.route('/api/attack/arp/stop', methods=['POST'])
+def stop_arp():
+    data = request.json
+    target = data.get('target')
+    gateway = data.get('gateway')
+    
+    result = attack_modules.stop_arp_spoof(target, gateway)
+    return jsonify(result)
+
 @app.route('/api/sniff', methods=['POST'])
 def sniff_packets():
     data = request.json
