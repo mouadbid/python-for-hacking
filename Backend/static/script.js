@@ -495,127 +495,128 @@ document.addEventListener('DOMContentLoaded', () => {
             .catch(err => {
                 analysisResultDiv.innerHTML += `<br><span style="color:var(--danger)">Error: ${err}</span>`;
             })
-        dosAnalyzeBtn.disabled = false;
-        dosAnalyzeBtn.innerHTML = "🔍 Analyze Target";
-    });
+            .finally(() => {
+                dosAnalyzeBtn.disabled = false;
+                dosAnalyzeBtn.innerHTML = "🔍 Analyze Target";
+            });
     };
 
-// --- ARP SPOOFING LOGIC ---
-let isArpActive = false;
-let arpBtn;
-let visualizerPanel;
-let arpStatusText;
+    // --- ARP SPOOFING LOGIC ---
+    let isArpActive = false;
+    let arpBtn;
+    let visualizerPanel;
+    let arpStatusText;
 
-window.toggleArpSpoof = () => {
-    // Initialize elements lazily to ensure DOM is ready or they exist
-    if (!arpBtn) arpBtn = document.getElementById('arp-btn');
-    if (!visualizerPanel) visualizerPanel = document.querySelector('.visualizer-panel');
-    if (!arpStatusText) arpStatusText = document.getElementById('spoof-status-text');
+    window.toggleArpSpoof = () => {
+        // Initialize elements lazily to ensure DOM is ready or they exist
+        if (!arpBtn) arpBtn = document.getElementById('arp-btn');
+        if (!visualizerPanel) visualizerPanel = document.querySelector('.visualizer-panel');
+        if (!arpStatusText) arpStatusText = document.getElementById('spoof-status-text');
 
-    const target = document.getElementById('arp-target').value;
-    const gateway = document.getElementById('arp-gateway').value;
+        const target = document.getElementById('arp-target').value;
+        const gateway = document.getElementById('arp-gateway').value;
 
-    if (!target || !gateway) {
-        alert('Please enter both Target and Gateway IPs.');
-        return;
-    }
+        if (!target || !gateway) {
+            alert('Please enter both Target and Gateway IPs.');
+            return;
+        }
 
-    if (!isArpActive) {
-        // START POISONING
-        arpBtn.disabled = true;
-        arpBtn.innerHTML = "⏳ Starting...";
+        if (!isArpActive) {
+            // START POISONING
+            arpBtn.disabled = true;
+            arpBtn.innerHTML = "⏳ Starting...";
 
-        fetch('/api/attack/arp/start', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target: target, gateway: gateway })
-        })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    isArpActive = true;
-                    arpBtn.innerHTML = "🛑 STOP POISONING";
-                    arpBtn.classList.remove('btn-danger'); // Optional style change
-                    arpBtn.style.background = '#ff0055';
-                    arpBtn.style.boxShadow = '0 0 20px #ff0055';
+            fetch('/api/attack/arp/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: target, gateway: gateway })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        isArpActive = true;
+                        arpBtn.innerHTML = "🛑 STOP POISONING";
+                        arpBtn.classList.remove('btn-danger'); // Optional style change
+                        arpBtn.style.background = '#ff0055';
+                        arpBtn.style.boxShadow = '0 0 20px #ff0055';
 
-                    visualizerPanel.classList.add('poison-active');
-                    arpStatusText.innerHTML = `STATUS: <span style="color:#ff0055">MITM ACTIVE</span> - Intercepting Traffic...`;
-                    arpStatusText.style.animation = "pulse-text 1s infinite";
+                        visualizerPanel.classList.add('poison-active');
+                        arpStatusText.innerHTML = `STATUS: <span style="color:#ff0055">MITM ACTIVE</span> - Intercepting Traffic...`;
+                        arpStatusText.style.animation = "pulse-text 1s infinite";
 
-                    // Update IP labels in visualizer
-                    document.getElementById('vis-victim-ip').innerText = target;
-                    document.getElementById('vis-gateway-ip').innerText = gateway;
-                } else {
-                    alert('Error: ' + data.message);
+                        // Update IP labels in visualizer
+                        document.getElementById('vis-victim-ip').innerText = target;
+                        document.getElementById('vis-gateway-ip').innerText = gateway;
+                    } else {
+                        alert('Error: ' + data.message);
+                        arpBtn.innerHTML = "⚠️ START POISONING";
+                    }
+                })
+                .catch(err => alert('Request Failed: ' + err))
+                .finally(() => arpBtn.disabled = false);
+
+        } else {
+            // STOP POISONING
+            arpBtn.disabled = true;
+            arpBtn.innerHTML = "⏳ Stopping & Restoring...";
+
+            fetch('/api/attack/arp/stop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: target, gateway: gateway })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    isArpActive = false;
                     arpBtn.innerHTML = "⚠️ START POISONING";
-                }
-            })
-            .catch(err => alert('Request Failed: ' + err))
-            .finally(() => arpBtn.disabled = false);
+                    arpBtn.style.background = '';
+                    arpBtn.style.boxShadow = '';
+                    arpBtn.classList.add('btn-danger');
 
-    } else {
-        // STOP POISONING
-        arpBtn.disabled = true;
-        arpBtn.innerHTML = "⏳ Stopping & Restoring...";
+                    visualizerPanel.classList.remove('poison-active');
+                    arpStatusText.innerHTML = `STATUS: <span style="color:var(--accent)">RESTORED</span> - Traffic Normal`;
+                    arpStatusText.style.animation = "none";
+                })
+                .finally(() => arpBtn.disabled = false);
+        }
+    };
 
-        fetch('/api/attack/arp/stop', {
+    // Sniffing Handler
+    sniffBtn.onclick = () => {
+        const targetIp = sniffTarget.value.trim();
+        const count = sniffCount.value;
+
+        if (!targetIp) {
+            alert("Please enter a Target IP to sniff.");
+            return;
+        }
+
+        sniffBtn.disabled = true;
+        sniffBtn.innerHTML = '👃 Sniffing...';
+        sniffResultsSection.classList.remove('hidden');
+        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Capturing packets from ' + targetIp + '...</td></tr>';
+
+        fetch('/api/sniff', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target: target, gateway: gateway })
+            body: JSON.stringify({
+                target_ip: targetIp,
+                count: count
+            })
         })
             .then(res => res.json())
             .then(data => {
-                isArpActive = false;
-                arpBtn.innerHTML = "⚠️ START POISONING";
-                arpBtn.style.background = '';
-                arpBtn.style.boxShadow = '';
-                arpBtn.classList.add('btn-danger');
-
-                visualizerPanel.classList.remove('poison-active');
-                arpStatusText.innerHTML = `STATUS: <span style="color:var(--accent)">RESTORED</span> - Traffic Normal`;
-                arpStatusText.style.animation = "none";
-            })
-            .finally(() => arpBtn.disabled = false);
-    }
-};
-
-// Sniffing Handler
-sniffBtn.onclick = () => {
-    const targetIp = sniffTarget.value.trim();
-    const count = sniffCount.value;
-
-    if (!targetIp) {
-        alert("Please enter a Target IP to sniff.");
-        return;
-    }
-
-    sniffBtn.disabled = true;
-    sniffBtn.innerHTML = '👃 Sniffing...';
-    sniffResultsSection.classList.remove('hidden');
-    sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Capturing packets from ' + targetIp + '...</td></tr>';
-
-    fetch('/api/sniff', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            target_ip: targetIp,
-            count: count
-        })
-    })
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Error: ${data.error}</td></tr>`;
-            } else {
-                sniffResultsBody.innerHTML = '';
-                if (data.length === 0) {
-                    sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No packets captured.</td></tr>';
-                }
-                data.forEach((pkt, index) => {
-                    const row = document.createElement('tr');
-                    row.classList.add('sniff-row');
-                    row.innerHTML = `
+                if (data.error) {
+                    sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Error: ${data.error}</td></tr>`;
+                } else {
+                    sniffResultsBody.innerHTML = '';
+                    if (data.length === 0) {
+                        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No packets captured.</td></tr>';
+                    }
+                    data.forEach((pkt, index) => {
+                        const row = document.createElement('tr');
+                        row.classList.add('sniff-row');
+                        row.innerHTML = `
                             <td>${pkt.time}</td>
                             <td>${pkt.src}</td>
                             <td>${pkt.dst}</td>
@@ -623,31 +624,31 @@ sniffBtn.onclick = () => {
                             <td>${pkt.len}</td>
                             <td style="font-size: 0.85em;">${pkt.summary}</td>
                         `;
-                    sniffResultsBody.appendChild(row);
-                });
+                        sniffResultsBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(err => {
+                sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Request Failed: ${err}</td></tr>`;
+            })
+            .finally(() => {
+                sniffBtn.disabled = false;
+                sniffBtn.innerHTML = '🚀 Start Sniffing';
+            });
+    };
+
+    // Client-side Filtering
+    sniffSearch.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.sniff-row');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
             }
-        })
-        .catch(err => {
-            sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Request Failed: ${err}</td></tr>`;
-        })
-        .finally(() => {
-            sniffBtn.disabled = false;
-            sniffBtn.innerHTML = '🚀 Start Sniffing';
         });
-};
-
-// Client-side Filtering
-sniffSearch.addEventListener('input', (e) => {
-    const searchTerm = e.target.value.toLowerCase();
-    const rows = document.querySelectorAll('.sniff-row');
-
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        if (text.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
-        }
     });
-});
 });
