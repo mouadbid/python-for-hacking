@@ -146,6 +146,18 @@ def attack_dos():
     
     return jsonify(result)
 
+@app.route('/api/attack/my-ip', methods=['GET'])
+def get_my_ip():
+    try:
+        # Trick to get the primary IP used for internet connection
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return jsonify({'ip': ip})
+    except:
+        return jsonify({'ip': '127.0.0.1'})
+
 @app.route('/api/attack/arp/start', methods=['POST'])
 def start_arp():
     data = request.json

@@ -7,7 +7,8 @@ import random
 import platform
 import subprocess
 import threading
-from scapy.all import ARP, Ether, srp, send, sniff, conf
+import re
+from scapy.all import ARP, Ether, srp, send, sniff, conf, getmacbyip
 
 # Global ARP Control
 spoofing_active = False
@@ -214,8 +215,15 @@ def http_flood(target, port, duration):
 def get_mac(ip):
     """
     Returns MAC address of a given IP. 
+    Tries multiple methods for robustness.
     """
     try:
+        # Method 1: Scapy's built-in function (fastest, uses cache)
+        mac = getmacbyip(ip)
+        if mac:
+            return mac
+            
+        # Method 2: Manual ARP Request (srp)
         # Create ARP Request
         arp_req = ARP(pdst=ip)
         broadcast = Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -226,6 +234,16 @@ def get_mac(ip):
         
         if result:
             return result[0][1].hwsrc
+            
+        # Method 3: System ARP Table (Windows "arp -a")
+        # Useful if firewall blocks incoming ARP replies but OS sees them
+        if platform.system().lower() == "windows":
+            output = subprocess.check_output(f"arp -a {ip}", shell=True).decode()
+            # Regex to find MAC: xx-xx-xx... or xx:xx:xx...
+            mac_search = re.search(r"([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})", output)
+            if mac_search:
+                return mac_search.group(0).replace('-', ':')
+                
         return None
     except Exception as e:
         print(f"[!] get_mac error for {ip}: {e}")

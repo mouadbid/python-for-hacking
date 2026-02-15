@@ -115,6 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+    // Load Attacker IP for ARP Viz
+    fetch('/api/attack/my-ip')
+        .then(res => res.json())
+        .then(data => {
+            const attackerNode = document.querySelector('.attacker-node .node-ip');
+            if (attackerNode) attackerNode.innerText = data.ip; // Display "Attacker IP"
+        });
+
     // Discover Hosts
     discoverBtn.onclick = () => {
         const target = targetInput.value;
@@ -579,6 +587,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 })
                 .finally(() => arpBtn.disabled = false);
         }
+    };
+
+    window.verifyArp = () => {
+        const target = document.getElementById('arp-target').value;
+        if (!target) {
+            alert("Please enter a target first.");
+            return;
+        }
+
+        // Switch to Sniff Tab
+        document.querySelector('.nav-link[data-tab="sniffing"]').click();
+
+        // Fill Inputs
+        document.getElementById('sniff-target').value = target;
     };
 
     // Sniffing Handler
