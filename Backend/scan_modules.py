@@ -33,24 +33,26 @@ def scan_aggressive(target, scanner):
 def format_results(scanner, target):
     """Formats the scan results into a readable string with detailed information."""
     if target not in scanner.all_hosts():
-        return f"No scan results returned for {target}. Host might be down or filtering probes."
+        return f"No scan results returned for {target}. Host might be down, filtering probes, or Nmap lacks privileges (try running as Admin)."
 
+    host_data = scanner[target]
+    
     output = []
     output.append("-" * 40)
     output.append(f"Scan Report for {target}")
-    output.append(f"State: {scanner[target].state()}")
+    output.append(f"State: {host_data.state()}")
     
     # Process Protocols
-    protocols = scanner[target].all_protocols()
+    protocols = host_data.all_protocols()
     if not protocols:
         output.append("\nNo open ports found in the scanned range.")
         return "\n".join(output)
 
     for proto in protocols:
         output.append(f"\nProtocol: {proto.upper()}")
-        ports = scanner[target][proto].keys()
+        ports = host_data[proto].keys()
         for port in sorted(ports):
-            service_info = scanner[target][proto][port]
+            service_info = host_data[proto][port]
             state = service_info['state']
             service_name = service_info['name']
             product = service_info.get('product', '')
@@ -65,13 +67,13 @@ def format_results(scanner, target):
             output.append(line)
 
     # Process OS Matches
-    if 'osmatch' in scanner[target]:
+    if 'osmatch' in host_data:
         output.append("\nOS Detection Results:")
-        for osmatch in scanner[target]['osmatch']:
+        for osmatch in host_data['osmatch']:
             output.append(f"  - {osmatch['name']} (Accuracy: {osmatch['accuracy']}%)")
             
     # Process Hostnames
-    hostnames = scanner[target].hostname()
+    hostnames = host_data.hostname()
     if hostnames:
         output.append(f"\nHostname: {hostnames}")
         

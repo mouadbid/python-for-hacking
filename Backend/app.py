@@ -71,6 +71,7 @@ def run_scan():
         return jsonify({'result': formatted_result, 'raw': result})
         
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/attack/bruteforce', methods=['POST'])

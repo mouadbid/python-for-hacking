@@ -11,12 +11,13 @@ def discover_hosts(target):
         scanner = nm.PortScanner()
     except nm.PortScannerError:
         # If nmap is not found in the system path
+        # If nmap is not found in the system path
         print("Nmap not found", sys.exc_info()[0])
-        sys.exit(1)
+        return []
     except Exception as e:
         # Catch unexpected errors
         print(f"Unexpected error: {e}")
-        sys.exit(1)
+        return []
 
     print(f"Scanning target: {target}")
     

