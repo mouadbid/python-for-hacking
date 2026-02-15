@@ -4,44 +4,46 @@
         <h2>👃 Network <span class="highlight">Sniffer</span></h2>
         <p class="description">Capture and analyze network traffic in real-time.</p>
 
-        <div style="flex: 2;">
-            <label for="sniff-target">Target IP:</label>
-            <input type="text" id="sniff-target" placeholder="e.g., 192.168.1.50">
+        <div class="input-group">
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 2;">
+                    <label for="sniff-target">Target IP:</label>
+                    <input type="text" id="sniff-target" placeholder="e.g., 192.168.1.50">
+                </div>
+                <div style="flex: 1;">
+                    <label for="sniff-count">Packet Count:</label>
+                    <input type="number" id="sniff-count" value="10" min="1" max="100">
+                </div>
+            </div>
         </div>
-        <div style="flex: 1;">
-            <label for="sniff-count">Packet Count:</label>
-            <input type="number" id="sniff-count" value="10" min="1" max="100">
+
+        <!-- Search Bar for Results -->
+        <div class="input-group">
+            <label for="sniff-search">Filter Results:</label>
+            <input type="text" id="sniff-search" placeholder="Type to filter (e.g., 'HTTP', 'TCP')...">
         </div>
-</div>
-</div>
 
-<!-- Search Bar for Results -->
-<div class="input-group">
-    <label for="sniff-search">Filter Results:</label>
-    <input type="text" id="sniff-search" placeholder="Type to filter (e.g., 'HTTP', 'TCP')...">
-</div>
+        <button id="sniff-btn" class="btn">🚀 Start Sniffing</button>
 
-<button id="sniff-btn" class="btn">🚀 Start Sniffing</button>
-
-<div id="sniff-results-section" class="results-area hidden" style="margin-top: 1.5rem;">
-    <h3>Captured Packets</h3>
-    <div class="table-container">
-        <table class="scan-table">
-            <thead>
-                <tr>
-                    <th>Time</th>
-                    <th>Source</th>
-                    <th>Destination</th>
-                    <th>Protocol</th>
-                    <th>Length</th>
-                    <th>Info</th>
-                </tr>
-            </thead>
-            <tbody id="sniff-results-body">
-                <!-- Results here -->
-            </tbody>
-        </table>
-    </div>
-</div>
-</section>
+        <div id="sniff-results-section" class="results-area hidden" style="margin-top: 1.5rem;">
+            <h3>Captured Packets</h3>
+            <div class="table-container">
+                <table class="scan-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Protocol</th>
+                            <th>Length</th>
+                            <th>Info</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sniff-results-body">
+                        <!-- Results here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
 </div>
