@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sniffing Elements
     const sniffFilter = document.getElementById('sniff-filter');
+    const sniffPort = document.getElementById('sniff-port');
     const sniffCount = document.getElementById('sniff-count');
     const sniffBtn = document.getElementById('sniff-btn');
     const sniffResultsSection = document.getElementById('sniff-results-section');
@@ -412,8 +413,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sniffing Handler
     sniffBtn.onclick = () => {
-        const filter = sniffFilter.value;
+        let filter = sniffFilter.value.trim();
+        const port = sniffPort.value.trim();
         const count = sniffCount.value;
+
+        // Construct Filter Logic
+        if (port) {
+            if (filter) {
+                filter = `(${filter}) and port ${port}`;
+            } else {
+                filter = `port ${port}`;
+            }
+        }
 
         sniffBtn.disabled = true;
         sniffBtn.innerHTML = '👃 Sniffing...';

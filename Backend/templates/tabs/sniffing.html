@@ -5,8 +5,16 @@
         <p class="description">Capture and analyze network traffic in real-time.</p>
 
         <div class="input-group">
-            <label for="sniff-filter">BPF Filter (e.g., 'tcp port 80', 'icmp'):</label>
-            <input type="text" id="sniff-filter" placeholder="Leave empty for all traffic">
+            <div style="display: flex; gap: 1rem;">
+                <div style="flex: 2;">
+                    <label for="sniff-filter">BPF Filter (Optional):</label>
+                    <input type="text" id="sniff-filter" placeholder="e.g., 'tcp', 'host 192.168.1.50'">
+                </div>
+                <div style="flex: 1;">
+                    <label for="sniff-port">Search by Port:</label>
+                    <input type="number" id="sniff-port" placeholder="e.g., 80, 443">
+                </div>
+            </div>
         </div>
 
         <div class="input-group">
