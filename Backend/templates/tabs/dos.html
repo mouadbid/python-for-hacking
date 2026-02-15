@@ -1,39 +1,162 @@
 <!-- DoS Attack View -->
 <div id="dos-view" class="view-section hidden">
-    <section class="card" style="border-color: var(--danger);">
-        <h2 style="color: var(--danger);">⚠️ DoS <span class="highlight"
-                style="color: var(--text-primary);">Attack</span></h2>
-        <p class="description" style="color: var(--danger);">
-            <strong>WARNING:</strong> This module performs a high-volume UDP Flood attack.
-            Only use this on your own network or systems you have explicit permission to test.
-        </p>
+    <div class="dos-console-layout">
 
-        <div class="input-group">
-            <label for="dos-target">Target IP:</label>
-            <input type="text" id="dos-target" placeholder="192.168.1.X">
-        </div>
-
-        <div class="input-group">
-            <div style="display: flex; gap: 1rem;">
-                <div style="flex: 1;">
-                    <label for="dos-port">Target Port:</label>
-                    <input type="number" id="dos-port" placeholder="80" value="80">
-                </div>
-                <div style="flex: 1;">
-                    <label for="dos-duration">Duration (Seconds):</label>
-                    <input type="number" id="dos-duration" placeholder="10" value="10" max="60">
-                </div>
+        <!-- Header / Mode Selector -->
+        <div class="attack-modes">
+            <div class="mode-card active" data-mode="udp" onclick="selectDosMode('udp')">
+                <div class="mode-icon">💥</div>
+                <h3>UDP Flood</h3>
+                <p>Volumetric bandwidth saturation.</p>
+            </div>
+            <div class="mode-card" data-mode="tcp" onclick="selectDosMode('tcp')">
+                <div class="mode-icon">🔗</div>
+                <h3>TCP Flood</h3>
+                <p>Connection state exhaustion.</p>
+            </div>
+            <div class="mode-card" data-mode="http" onclick="selectDosMode('http')">
+                <div class="mode-icon">🌐</div>
+                <h3>HTTP Flood</h3>
+                <p>Layer 7 request overwhelm.</p>
             </div>
         </div>
 
-        <button id="dos-launch-btn" class="btn"
-            style="background: var(--danger); box-shadow: 0 0 15px var(--danger-glow); width: 100%; margin-top: 1rem;">
-            🚀 LAUNCH UDP FLOOD
-        </button>
+        <!-- Main Control Panel -->
+        <section class="card control-panel">
+            <h2 id="dos-title">🚀 UDP Flood Configuration</h2>
 
-        <div id="dos-results-section" class="results-area hidden" style="margin-top: 1.5rem;">
-            <h3>Attack Log</h3>
-            <pre id="dos-output" style="border-color: var(--danger); color: var(--danger);">Initializing...</pre>
-        </div>
-    </section>
+            <div class="grid-inputs">
+                <div class="input-group">
+                    <label>Target Host (IP/Domain)</label>
+                    <input type="text" id="dos-target" placeholder="e.g., 192.168.1.50">
+                </div>
+                <div class="input-group">
+                    <label>Target Port</label>
+                    <input type="number" id="dos-port" value="80">
+                </div>
+                <div class="input-group">
+                    <label>Duration (Seconds)</label>
+                    <input type="number" id="dos-duration" value="30" max="60">
+                </div>
+            </div>
+
+            <!-- UDP Specific Options -->
+            <div id="udp-options" class="input-group">
+                <label>Payload Size</label>
+                <select id="dos-size">
+                    <option value="64">Small (64 bytes)</option>
+                    <option value="1024" selected>Medium (1KB)</option>
+                    <option value="65500">Large (64KB)</option>
+                </select>
+            </div>
+
+            <div class="action-buttons">
+                <button id="dos-analyze-btn" class="btn">🔍 Analyze Target</button>
+                <button id="dos-btn" class="btn btn-danger">⚠️ LAUNCH ATTACK</button>
+            </div>
+
+            <!-- Analysis Result Overlay -->
+            <div id="analysis-result" class="analysis-box hidden"></div>
+        </section>
+
+        <!-- Live Terminal Log -->
+        <section class="card terminal-panel">
+            <h2>💻 Attack Terminal</h2>
+            <div id="dos-terminal" class="terminal-window">
+                <span class="prompt">root@kali:~/attacks#</span> <span class="cursor">_</span>
+            </div>
+        </section>
+
+    </div>
 </div>
+
+<style>
+    /* Local Styles for specific DoS layout */
+    .dos-console-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .attack-modes {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .mode-card {
+        flex: 1;
+        background: rgba(0, 20, 10, 0.6);
+        border: 1px solid var(--border);
+        padding: 1.5rem;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        text-align: center;
+    }
+
+    .mode-card:hover {
+        background: rgba(0, 255, 65, 0.1);
+        transform: translateY(-3px);
+    }
+
+    .mode-card.active {
+        border-color: var(--accent);
+        box-shadow: 0 0 15px var(--accent-glow);
+        background: rgba(0, 255, 65, 0.15);
+    }
+
+    .mode-icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .mode-card h3 {
+        color: var(--accent);
+        margin: 0.5rem 0;
+        font-size: 1.1rem;
+        justify-content: center;
+        border: none;
+    }
+
+    .mode-card p {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+
+    .grid-inputs {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+
+    .action-buttons button {
+        flex: 1;
+    }
+
+    .terminal-window {
+        background: #000;
+        border: 1px solid #333;
+        padding: 1rem;
+        height: 200px;
+        overflow-y: auto;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+        color: #0f0;
+    }
+
+    .analysis-box {
+        margin-top: 1rem;
+        padding: 1rem;
+        background: rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--accent);
+        border-left: 4px solid var(--accent);
+    }
+</style>

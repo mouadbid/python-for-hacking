@@ -28,9 +28,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const dosTarget = document.getElementById('dos-target');
     const dosPort = document.getElementById('dos-port');
     const dosDuration = document.getElementById('dos-duration');
-    const dosLaunchBtn = document.getElementById('dos-launch-btn');
-    const dosOutput = document.getElementById('dos-output');
-    const dosResultsSection = document.getElementById('dos-results-section');
+    const dosPacketSize = document.getElementById('dos-size');
+    const dosBtn = document.getElementById('dos-btn');
+    const dosAnalyzeBtn = document.getElementById('dos-analyze-btn');
+    const dosTerminal = document.getElementById('dos-terminal');
+    const udpOptions = document.getElementById('udp-options');
+    const analysisResultDiv = document.getElementById('analysis-result');
+
+    let currentAttackMode = 'udp';
+    let attackInterval = null; // For terminal simulation
+
+    // Global function for onclick in HTML
+    window.selectDosMode = (mode) => {
+        currentAttackMode = mode;
+        // Update UI
+        document.querySelectorAll('.mode-card').forEach(card => card.classList.remove('active'));
+        document.querySelector(`.mode-card[data-mode="${mode}"]`).classList.add('active');
+
+        // Update Title
+        document.getElementById('dos-title').innerText = `🚀 ${mode.toUpperCase()} Flood Configuration`;
+
+        // Toggle Options
+        if (mode === 'udp') {
+            udpOptions.style.display = 'block';
+        } else {
+            udpOptions.style.display = 'none';
+        }
+    };
 
     // Sniffing Elements
     const sniffTarget = document.getElementById('sniff-target');
@@ -372,42 +396,108 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // DoS Attack Handler
-    dosLaunchBtn.onclick = () => {
+    dosBtn.onclick = () => {
         const target = dosTarget.value;
         const port = dosPort.value;
         const duration = dosDuration.value;
+        const packetSize = dosPacketSize.value;
 
         if (!target || !port || !duration) {
-            alert("Please fill in all DoS fields.");
+            alert('Please fill in all DoS fields');
             return;
         }
 
-        dosLaunchBtn.disabled = true;
-        dosLaunchBtn.innerHTML = '⚠️ ATTACK IN PROGRESS...';
-        dosResultsSection.classList.remove('hidden');
-        dosOutput.textContent = `Initiating UDP Flood on ${target}:${port} for ${duration} seconds...`;
+        dosBtn.disabled = true;
+        dosBtn.innerHTML = '⚠️ ATTACKING...';
+
+        // Start Terminal Simulation
+        dosTerminal.innerHTML = `<span class="prompt">root@kali:~/attacks#</span> ./flood_${currentAttackMode}.py -t ${target} -p ${port} -d ${duration}<br>`;
+        let logCount = 0;
+        let attackInterval = setInterval(() => { // Declare attackInterval with let
+            logCount++;
+            const timestamp = new Date().toLocaleTimeString();
+            let msg = "";
+            if (currentAttackMode === 'udp') msg = `[${timestamp}] Sending UDP packet (${packetSize} bytes) -> ${target}:${port}`;
+            if (currentAttackMode === 'tcp') msg = `[${timestamp}] SYN packet sent -> ${target}:${port} (seq=${logCount})`;
+            if (currentAttackMode === 'http') msg = `[${timestamp}] GET / HTTP/1.1 -> ${target}:${port} (200 OK)`;
+
+            const line = document.createElement('div');
+            line.innerText = msg;
+            line.style.color = currentAttackMode === 'udp' ? '#0f0' : (currentAttackMode === 'tcp' ? '#00ccff' : '#ff9900');
+            dosTerminal.appendChild(line);
+            dosTerminal.scrollTop = dosTerminal.scrollHeight;
+
+            if (logCount > 100) dosTerminal.innerHTML = ''; // Keep it clean
+        }, 100); // Fast logs
 
         fetch('/api/attack/dos', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ target, port, duration })
+            body: JSON.stringify({
+                target: target,
+                port: port,
+                duration: duration,
+                packet_size: packetSize,
+                type: currentAttackMode
+            })
         })
             .then(res => res.json())
             .then(data => {
-                if (data.error) {
-                    dosOutput.textContent = `Error: ${data.error}`;
-                } else {
-                    dosOutput.textContent = data.message;
-                    dosOutput.style.color = '#00ff41';
-                }
+                clearInterval(attackInterval);
+                dosTerminal.innerHTML += `<br><span style="color: ${data.status === 'success' ? '#0f0' : '#f00'}">root@kali:~/attacks# ${data.message}</span><br>`;
             })
             .catch(err => {
-                dosOutput.textContent = `Request Failed: ${err}`;
+                clearInterval(attackInterval);
+                dosTerminal.innerHTML += `<br><span style="color: #f00">Error: ${err}</span>`;
             })
             .finally(() => {
-                dosLaunchBtn.disabled = false;
-                dosLaunchBtn.innerHTML = '🚀 LAUNCH UDP FLOOD';
-                setTimeout(() => { dosOutput.style.color = 'var(--danger)'; }, 3000);
+                dosBtn.disabled = false;
+                dosBtn.innerHTML = '⚠️ LAUNCH ATTACK';
+            });
+    };
+
+    // DoS Analysis Handler
+    dosAnalyzeBtn.onclick = () => {
+        const target = dosTarget.value;
+        const port = dosPort.value;
+
+        if (!target) {
+            alert("Please enter a target IP first.");
+            return;
+        }
+
+        dosAnalyzeBtn.disabled = true;
+        dosAnalyzeBtn.innerHTML = "🔍 Checking...";
+        analysisResultDiv.classList.remove('hidden'); // Ensure visible
+        analysisResultDiv.innerHTML = "root@kali:~/analysis# Scanning target availability and firewall status...<br>";
+
+        fetch('/api/attack/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: target, port: port })
+        })
+            .then(res => res.json())
+            .then(data => {
+                let color = data.host_status.startsWith("UP") ? "var(--accent)" : "var(--danger)";
+                let fwColor = data.firewall_detected ? "var(--danger)" : "var(--accent)";
+
+                let html = `
+                <br>
+                Host Status: <strong style="color: ${color}">${data.host_status}</strong><br>
+                Port Status: <strong>${data.port_status}</strong><br>
+                Firewall: <strong style="color: ${fwColor}">${data.firewall_detected ? "DETECTED" : "Safe"}</strong><br>
+                <span style="color: #555">----------------------------------------</span>
+             `;
+                if (data.message) html += `<br><small>${data.message}</small>`;
+
+                analysisResultDiv.innerHTML += html;
+            })
+            .catch(err => {
+                analysisResultDiv.innerHTML += `<br><span style="color:var(--danger)">Error: ${err}</span>`;
+            })
+            .finally(() => {
+                dosAnalyzeBtn.disabled = false;
+                dosAnalyzeBtn.innerHTML = "🔍 Analyze Target";
             });
     };
 
