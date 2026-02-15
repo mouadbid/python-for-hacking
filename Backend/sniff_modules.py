@@ -1,4 +1,10 @@
-from scapy.all import sniff, IP, TCP, UDP, ICMP
+from scapy.all import sniff, IP, TCP, UDP, ICMP, conf
+import time
+import platform
+
+# Force use_pcap on Windows
+if platform.system() == "Windows":
+    conf.use_pcap = True
 import time
 
 def packet_callback(packet):

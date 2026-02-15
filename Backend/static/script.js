@@ -33,8 +33,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const dosResultsSection = document.getElementById('dos-results-section');
 
     // Sniffing Elements
-    const sniffFilter = document.getElementById('sniff-filter');
-    const sniffPort = document.getElementById('sniff-port');
+    const sniffTarget = document.getElementById('sniff-target');
+    const sniffSearch = document.getElementById('sniff-search');
     const sniffCount = document.getElementById('sniff-count');
     const sniffBtn = document.getElementById('sniff-btn');
     const sniffResultsSection = document.getElementById('sniff-results-section');
@@ -413,31 +413,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Sniffing Handler
     sniffBtn.onclick = () => {
-        let filter = sniffFilter.value.trim();
-        const port = sniffPort.value.trim();
+        const targetIp = sniffTarget.value.trim();
         const count = sniffCount.value;
 
-        // Construct Filter Logic
-        if (port) {
-            if (filter) {
-                filter = `(${filter}) and port ${port}`;
-            } else {
-                filter = `port ${port}`;
-            }
+        if (!targetIp) {
+            alert("Please enter a Target IP to sniff.");
+            return;
         }
 
         sniffBtn.disabled = true;
         sniffBtn.innerHTML = '👃 Sniffing...';
         sniffResultsSection.classList.remove('hidden');
-        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Capturing packets...</td></tr>';
+        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Capturing packets from ' + targetIp + '...</td></tr>';
 
         fetch('/api/sniff', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                interface: null, // Default
-                count: count,
-                filter: filter
+                target_ip: targetIp,
+                count: count
             })
         })
             .then(res => res.json())
@@ -451,6 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     data.forEach((pkt, index) => {
                         const row = document.createElement('tr');
+                        row.classList.add('sniff-row');
                         row.innerHTML = `
                             <td>${pkt.time}</td>
                             <td>${pkt.src}</td>
@@ -471,4 +466,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 sniffBtn.innerHTML = '🚀 Start Sniffing';
             });
     };
+
+    // Client-side Filtering
+    sniffSearch.addEventListener('input', (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll('.sniff-row');
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
 });

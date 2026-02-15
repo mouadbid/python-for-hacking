@@ -138,7 +138,21 @@ def sniff_packets():
         except (ValueError, TypeError):
              count = 10
         
-        filter_str = data.get('filter')
+        except (ValueError, TypeError):
+             count = 10
+        
+        target_ip = data.get('target_ip')
+        filter_str = ""
+        
+        if target_ip:
+            filter_str = f"host {target_ip}"
+        
+        # Additional custom filter if needed (not fully implemented in UI but supported in backend)
+        if data.get('filter'):
+             if filter_str:
+                 filter_str += f" and {data.get('filter')}"
+             else:
+                 filter_str = data.get('filter')
         
         # Security/Sanity check on count
         if count > 100:
