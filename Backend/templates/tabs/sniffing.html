@@ -1,0 +1,40 @@
+<!-- Sniffing View -->
+<div id="sniffing-view" class="view-section hidden">
+    <section class="card">
+        <h2>👃 Network <span class="highlight">Sniffer</span></h2>
+        <p class="description">Capture and analyze network traffic in real-time.</p>
+
+        <div class="input-group">
+            <label for="sniff-filter">BPF Filter (e.g., 'tcp port 80', 'icmp'):</label>
+            <input type="text" id="sniff-filter" placeholder="Leave empty for all traffic">
+        </div>
+
+        <div class="input-group">
+            <label for="sniff-count">Packet Count:</label>
+            <input type="number" id="sniff-count" value="10" min="1" max="100">
+        </div>
+
+        <button id="sniff-btn" class="btn">🚀 Start Sniffing</button>
+
+        <div id="sniff-results-section" class="results-area hidden" style="margin-top: 1.5rem;">
+            <h3>Captured Packets</h3>
+            <div class="table-container">
+                <table class="scan-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Protocol</th>
+                            <th>Length</th>
+                            <th>Info</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sniff-results-body">
+                        <!-- Results here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>

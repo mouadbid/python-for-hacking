@@ -3,6 +3,7 @@ import platform
 import scanner_nmap
 import scan_modules
 import attack_modules
+import sniff_modules
 import nmap
 import ipaddress
 import psutil
@@ -126,6 +127,30 @@ def dos_attack():
     print(f"[DEBUG] Starting UDP Flood on {target}:{port} for {duration}s")
     result = attack_modules.udp_flood(target, port, duration)
     return jsonify(result)
+
+@app.route('/api/sniff', methods=['POST'])
+def sniff_packets():
+    data = request.json
+    try:
+        interface = data.get('interface')
+        try:
+            count = int(data.get('count', 10))
+        except (ValueError, TypeError):
+             count = 10
+        
+        filter_str = data.get('filter')
+        
+        # Security/Sanity check on count
+        if count > 100:
+            count = 100
+            
+        print(f"[DEBUG] Sniffing {count} packets on {interface} filter='{filter_str}'")
+        packets = sniff_modules.capture_packets(interface, count, filter_str)
+        return jsonify(packets)
+        
+    except Exception as e:
+        print(f"[ERROR] Sniffing failed: {e}")
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, port=5050)

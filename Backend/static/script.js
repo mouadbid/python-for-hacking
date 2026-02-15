@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const dosOutput = document.getElementById('dos-output');
     const dosResultsSection = document.getElementById('dos-results-section');
 
+    // Sniffing Elements
+    const sniffFilter = document.getElementById('sniff-filter');
+    const sniffCount = document.getElementById('sniff-count');
+    const sniffBtn = document.getElementById('sniff-btn');
+    const sniffResultsSection = document.getElementById('sniff-results-section');
+    const sniffResultsBody = document.getElementById('sniff-results-body');
+
     // Password Mode Elements
     const bfPassMode = document.getElementById('bf-pass-mode');
     const manualPassGroup = document.getElementById('manual-pass-group');
@@ -400,6 +407,57 @@ document.addEventListener('DOMContentLoaded', () => {
                 dosLaunchBtn.disabled = false;
                 dosLaunchBtn.innerHTML = '🚀 LAUNCH UDP FLOOD';
                 setTimeout(() => { dosOutput.style.color = 'var(--danger)'; }, 3000);
+            });
+    };
+
+    // Sniffing Handler
+    sniffBtn.onclick = () => {
+        const filter = sniffFilter.value;
+        const count = sniffCount.value;
+
+        sniffBtn.disabled = true;
+        sniffBtn.innerHTML = '👃 Sniffing...';
+        sniffResultsSection.classList.remove('hidden');
+        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Capturing packets...</td></tr>';
+
+        fetch('/api/sniff', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                interface: null, // Default
+                count: count,
+                filter: filter
+            })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Error: ${data.error}</td></tr>`;
+                } else {
+                    sniffResultsBody.innerHTML = '';
+                    if (data.length === 0) {
+                        sniffResultsBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No packets captured.</td></tr>';
+                    }
+                    data.forEach((pkt, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${pkt.time}</td>
+                            <td>${pkt.src}</td>
+                            <td>${pkt.dst}</td>
+                            <td>${pkt.proto}</td>
+                            <td>${pkt.len}</td>
+                            <td style="font-size: 0.85em;">${pkt.summary}</td>
+                        `;
+                        sniffResultsBody.appendChild(row);
+                    });
+                }
+            })
+            .catch(err => {
+                sniffResultsBody.innerHTML = `<tr><td colspan="6" style="color:var(--danger)">Request Failed: ${err}</td></tr>`;
+            })
+            .finally(() => {
+                sniffBtn.disabled = false;
+                sniffBtn.innerHTML = '🚀 Start Sniffing';
             });
     };
 });

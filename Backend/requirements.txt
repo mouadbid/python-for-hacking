@@ -3,3 +3,4 @@ python-nmap
 paramiko
 psutil
 telnetlib3
+scapy
